@@ -90,16 +90,9 @@ public class LexicalAnalyzer {
             }
 
             // 识别符号
-            final var punct = String.valueOf(ch);
+            final var punct = ch == ';' ? "Semicolon" : String.valueOf(ch);
             if (TokenKind.isAllowed(punct)) {
                 result.add(Token.simple(punct));
-                i++;
-                continue;
-            }
-
-            // 识别分号
-            if (ch == ';') {
-                result.add(Token.simple("Semicolon"));
                 i++;
                 continue;
             }
