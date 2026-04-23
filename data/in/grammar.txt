@@ -1,13 +1,13 @@
 P' -> P;
 P -> S_list;
-S_list -> S Semicolon S_list;
-S_list -> S Semicolon;
+S_list -> S S_list;
+S_list -> S;
 S -> M;
 S -> U;
 M -> if ( E ) M else M;
-M -> D id;
-M -> id = E;
-M -> return E;
+M -> D id Semicolon;
+M -> id = E Semicolon;
+M -> return E Semicolon;
 U -> if ( E ) S;
 U -> if ( E ) M else U;
 D -> int;
