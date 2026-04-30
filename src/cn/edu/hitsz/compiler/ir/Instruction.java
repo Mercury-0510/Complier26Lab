@@ -48,6 +48,18 @@ public class Instruction {
         return new Instruction(InstructionKind.RET, null, List.of(returnValue));
     }
 
+    public static Instruction createBZ(IRValue cond, String label) {
+        return new Instruction(InstructionKind.BZ, null, List.of(cond), label);
+    }
+
+    public static Instruction createJMP(String label) {
+        return new Instruction(InstructionKind.JMP, null, List.of(), label);
+    }
+
+    public static Instruction createLabel(String name) {
+        return new Instruction(InstructionKind.LABEL, null, List.of(), name);
+    }
+
 
     //============================== 不同种类 IR 的参数 getter ==============================
     public InstructionKind getKind() {
@@ -79,10 +91,35 @@ public class Instruction {
         return operands.get(0);
     }
 
+    public IRValue getBranchCondition() {
+        ensureKindMatch(Set.of(InstructionKind.BZ));
+        return operands.get(0);
+    }
+
+    public String getBranchLabel() {
+        ensureKindMatch(Set.of(InstructionKind.BZ, InstructionKind.JMP));
+        return label;
+    }
+
+    public String getLabelName() {
+        ensureKindMatch(Set.of(InstructionKind.LABEL));
+        return label;
+    }
+
 
     //============================== 基础设施 ==============================
     @Override
     public String toString() {
+        if (kind == InstructionKind.BZ) {
+            return "(BZ, %s, %s)".formatted(getBranchCondition(), getBranchLabel());
+        }
+        if (kind == InstructionKind.JMP) {
+            return "(JMP, , %s)".formatted(getBranchLabel());
+        }
+        if (kind == InstructionKind.LABEL) {
+            return "(LABEL, %s)".formatted(getLabelName());
+        }
+
         final var kindString = kind.toString();
         final var resultString = result == null ? "" : result.toString();
         final var operandsString = operands.stream().map(Objects::toString).collect(Collectors.joining(", "));
@@ -94,14 +131,20 @@ public class Instruction {
     }
 
     private Instruction(InstructionKind kind, IRVariable result, List<IRValue> operands) {
+        this(kind, result, operands, null);
+    }
+
+    private Instruction(InstructionKind kind, IRVariable result, List<IRValue> operands, String label) {
         this.kind = kind;
         this.result = result;
         this.operands = operands;
+        this.label = label;
     }
 
     private final InstructionKind kind;
     private final IRVariable result;
     private final List<IRValue> operands;
+    private final String label;
 
     private void ensureKindMatch(Set<InstructionKind> targetKinds) {
         final var kind = getKind();

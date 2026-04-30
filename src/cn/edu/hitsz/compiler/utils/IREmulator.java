@@ -19,34 +19,61 @@ public class IREmulator {
     }
 
     public Optional<Integer> execute() {
-        for (final var instruction : instructions) {
+        final var labelPositions = new HashMap<String, Integer>();
+        for (int i = 0; i < instructions.size(); i++) {
+            final var instruction = instructions.get(i);
+            if (instruction.getKind().isLabel()) {
+                labelPositions.put(instruction.getLabelName(), i);
+            }
+        }
+
+        int pc = 0;
+        while (pc < instructions.size()) {
+            final var instruction = instructions.get(pc);
             switch (instruction.getKind()) {
                 case MOV -> {
                     final var from = eval(instruction.getFrom());
                     environment.put(instruction.getResult(), from);
+                    pc++;
                 }
 
                 case ADD -> {
                     final var lhs = eval(instruction.getLHS());
                     final var rhs = eval(instruction.getRHS());
                     environment.put(instruction.getResult(), lhs + rhs);
+                    pc++;
                 }
 
                 case SUB -> {
                     final var lhs = eval(instruction.getLHS());
                     final var rhs = eval(instruction.getRHS());
                     environment.put(instruction.getResult(), lhs - rhs);
+                    pc++;
                 }
 
                 case MUL -> {
                     final var lhs = eval(instruction.getLHS());
                     final var rhs = eval(instruction.getRHS());
                     environment.put(instruction.getResult(), lhs * rhs);
+                    pc++;
                 }
 
-                case RET -> this.returnValue = eval(instruction.getReturnValue());
+                case RET -> {
+                    this.returnValue = eval(instruction.getReturnValue());
+                    pc++;
+                }
 
-                default -> throw new RuntimeException("Unknown instruction kind: " + instruction.getKind());
+                case BZ -> {
+                    if (eval(instruction.getBranchCondition()) == 0) {
+                        pc = getLabelPosition(labelPositions, instruction.getBranchLabel());
+                    } else {
+                        pc++;
+                    }
+                }
+
+                case JMP -> pc = getLabelPosition(labelPositions, instruction.getBranchLabel());
+
+                case LABEL -> pc++;
             }
         }
 
@@ -67,6 +94,14 @@ public class IREmulator {
         this.instructions = instructions;
         this.environment = new HashMap<>();
         this.returnValue = null;
+    }
+
+    private int getLabelPosition(Map<String, Integer> labelPositions, String label) {
+        if (!labelPositions.containsKey(label)) {
+            throw new RuntimeException("Unknown label: " + label);
+        }
+
+        return labelPositions.get(label);
     }
 
     private final List<Instruction> instructions;
